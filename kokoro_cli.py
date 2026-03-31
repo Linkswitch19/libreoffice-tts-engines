@@ -12,22 +12,31 @@ import os
 
 def main():
     args_tts =parser_TTSKokoro()
+    text_to_read = args_tts.text
+    if not text_to_read:
+        #Controlla se si sta usando un terminale o se c'e sul stdin
+        if not sys.stdin.isatty():
+            text_to_read = sys.stdin.read().strip()
+        else:
+            print("Errore: No Text found on stdin.")
+            sys.exit(1)
+    
     model_path,voices_path=extration_path()
-    samples, saple_rate=kokoro_engine_generation(args_tts,model_path,voices_path)
+    samples, saple_rate=kokoro_engine_generation(text_to_read,args_tts,model_path,voices_path)
     #save file
     sf.write(args_tts.output,samples,saple_rate)
     print(f"Saved in {args_tts.output}")
 
 
 
-def kokoro_engine_generation(args_tts,model_path,voices_path):
+def kokoro_engine_generation(text,args_tts,model_path,voices_path):
      #start Kokoro
     kokoro_tts= Kokoro(model_path,voices_path)
     
     #generate audio
-    print(f"Generate audio for: {args_tts.text[:30]}...")
+    print(f"Generate audio for: {text[:30]}...")
     samples, saple_rate = kokoro_tts.create(
-        args_tts.text,
+        text,
         voice=args_tts.voice,
         speed=1.0,
         lang=args_tts.lang
@@ -56,7 +65,7 @@ def parser_TTSKokoro():
     Parser for to read args of the voice 
     """
     parser = argparse.ArgumentParser(description='Generatore TTS Kokoro ONNX')
-    parser.add_argument('--text',type=str,required=True, help="Text to read")
+    parser.add_argument('--text',type=str,required=False, help="Text to read")
     parser.add_argument('--output',type=str, required=True, help='Path to save .wav')
     parser.add_argument('--lang', type=str, default= 'en-us', help='Language (ex. en-us,it)')
     parser.add_argument('--voice', type=str ,default='af_heart', help = 'Select voice')
